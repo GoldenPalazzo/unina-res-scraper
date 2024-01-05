@@ -13,7 +13,8 @@ BASE_URL = "https://www.docenti.unina.it"
 LOGIN_URL = f"{BASE_URL}/webdocenti-be/auth/login-post-evo"
 SEARCH_URL = f"{BASE_URL}/webdocenti-be/docenti"
 TEACHER_URL = f"{BASE_URL}/#!/professor/INSERT_ID/materiale_didattico"
-TEACHER_URL = f"{BASE_URL}/webdocenti-be/docenti/INSERT_ID/materiale-didattico/areapubb"
+TEACHER_URL = f"{BASE_URL}" \
+    "/webdocenti-be/docenti/INSERT_ID/materiale-didattico/areapubb"
 MATERIAL_URL = f"{BASE_URL}/webdocenti-be/allegati/materiale-didattico"
 
 CLEAR_COMMAND = "cls" if os.name == "nt" else "clear"
@@ -22,7 +23,7 @@ del requests.cookies.RequestsCookieJar.set_cookie # Necessario perché altriment
 
 config = {}
 
-def save_credentials():
+def save_credentials() -> None:
     mail = input("Mail studenti unina\n> ").strip()
     password = getpass.getpass("Password\n> ")
     with open('.env', 'w') as f:
@@ -54,27 +55,37 @@ def login() -> tuple | None:
     utente = req.json()
     return (utente, req.cookies) if "error" not in utente.keys() else None
 
-def get_elements(dir : dict, letter : str | None = None) -> list:
+def get_elements(dir: dict, letter: str | None = None) -> list:
     if letter != None:
-        return list(filter(lambda x : x.get("tipo") == letter, dir.get("contenutoCartella", [])))
+        return list(
+            filter(lambda x : x.get("tipo") == letter,
+                   dir.get("contenutoCartella", []))
+        )
     return dir.get("contenutoCartella", [])
 
-def download_file(cookies, file_obj : dict, name : str = "unnamed_professor") -> None:
+def download_file(
+        cookies, file_obj: dict,
+        name: str = "unnamed_professor"
+        ) -> None:
     new_url = MATERIAL_URL + f"/{file_obj.get('id')}"
-    file = requests.get(new_url, cookies=cookies, verify=False, allow_redirects=True)
-    #print(name)
-    path = f"{os.getcwd()}{os.sep}{name.replace(' ', '_')}{file_obj.get('percorso', '').replace('/', os.sep)}{os.sep}"
+    file = requests.get(
+        new_url, cookies=cookies, verify=False, allow_redirects=True
+    )
+    path = f"{os.getcwd()}{os.sep}{name.replace(' ', '_')}" \
+        f"{file_obj.get('percorso', '').replace('/', os.sep)}{os.sep}"
     os.makedirs(path, exist_ok=True)
     filename = file_obj.get('nome')
     full_path = f"{path}{filename}"
-    #print(file.url)
-    #print(file.content)
     with open(full_path, "wb") as f:
         f.write(file.content)
     print(f"File {full_path} salvato!")
 
 
-def list_dir(dir : dict, only_dirs : bool = False, only_files : bool = False) -> bool:
+def list_dir(
+        dir: dict,
+        only_dirs: bool = False,
+        only_files: bool = False
+        ) -> bool:
     path = dir.get("percorso")
     print(f"Percorso: {path}")
     letter = None
@@ -85,22 +96,24 @@ def list_dir(dir : dict, only_dirs : bool = False, only_files : bool = False) ->
         print(f"La cartella {path} è vuota")
         return False
     for index, element in enumerate(elements):
-        #print(element)
-        print(f"{index}) {element.get('tipo', 'Corso')} - {element['nome'].replace('_', ' ')}")
+        print(f"{index}) {element.get('tipo', 'Corso')}"
+              " - "
+              f"{element['nome'].replace('_', ' ')}")
     print()
     return True
 
-def download_element(teacher_url : str, cookies, dir : dict, index : int, name : str = "unnamed_professor") -> None:
+def download_element(teacher_url: str,
+                     cookies, dir: dict,
+                     index: int,
+                     name: str = "unnamed_professor") -> None:
     files = get_elements(dir, "F")
     if index == -1:
-        #print(f"Scaricando tutti i file delle sottocartelle di {dir}")
         for file in files:
             download_file(cookies, file, name)
     elif index == -2:
         download_element(teacher_url, cookies, dir, -1, name)
         for subdir_index in range(len(get_elements(dir, "D"))):
             subdir = enter_dir(teacher_url, cookies, dir, subdir_index)
-            #print(f"{subdir_index} -> {subdir}")
             download_element(teacher_url, cookies, subdir, -2, name)
     else:
         download_file(cookies, files[index], name)
@@ -167,17 +180,26 @@ def main() -> int:
                 if not list_dir(directory, only_dirs=True):
                     continue
                 dir_index = int(input("In quale cartella vuoi entrare?\n> "))
-                directory = enter_dir(teacher_url, cookies, directory, dir_index)
+                directory = enter_dir(
+                    teacher_url, cookies, directory, dir_index
+                )
                 os.system(CLEAR_COMMAND)
             elif action == 3:
                 if not list_dir(directory, only_files=True):
                     print("Non ci sono file, ora mostrerò solo le cartelle...")
                     list_dir(directory) 
                 print("\n-1) Scarica tutti i file nella cartella\n"
-                      "-2) Scarica tutti i file nella cartella e nelle sottocartelle\n")
+                      "-2) Scarica tutti i file nella cartella"
+                      " e nelle sottocartelle\n")
                 file_index = int(input("Quale file vuoi scaricare?\n> "))
                 os.system(CLEAR_COMMAND)
-                download_element(teacher_url, cookies, directory, file_index, f"{professore_json['nome']} {professore_json['cognome']}")
+                download_element(
+                    teacher_url,
+                    cookies,
+                    directory,
+                    file_index,
+                    f"{professore_json['nome']} {professore_json['cognome']}"
+                )
             
     return 0
 
