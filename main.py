@@ -138,15 +138,30 @@ def main() -> int:
         return 2
     name = input("Inserire nome e cognome del docente da ricercare: ").strip()
     user, cookies = access
-    try:
-        professore_json = requests.get(SEARCH_URL, params={ 
-            "nome": f"{name.lower()}",
-            "p": 0, 
-            "s": 10
-        }, verify=False).json()["content"][0]
-    except IndexError as e:
+    professore_json = None
+    professori_json = requests.get(SEARCH_URL, params={ 
+        "nome": f"{name.lower()}",
+        "p": 0, 
+        "s": 10
+    }, verify=False).json()["content"]
+    if len(professori_json) == 0:
         print("Errore: il nome inserito non è valido!")
         return 1
+    elif len(professori_json) > 1:
+        print("Ho trovato questi professori:")
+        for index, professore in enumerate(professori_json):
+            print(f"{index}) {professore["nome"]} {professore["cognome"]}")
+        while True:
+            try:
+                choice = int(input("Quale scegli?\n> ").strip())
+                professore_json = professori_json[choice]
+                break
+            except IndexError:
+                print("Non è una scelta valida.")
+            except ValueError:
+                print("Non hai inserito un numero!")
+    else:
+        professore_json = professori_json[0]
     teacher_url = TEACHER_URL.replace("INSERT_ID", professore_json["id"])
     teacher_materials = requests.get(
             teacher_url, verify=False
