@@ -1,5 +1,6 @@
 import dotenv
 import os
+import getpass
 import requests
 import requests.cookies
 import sys
@@ -18,13 +19,36 @@ CLEAR_COMMAND = "cls" if os.name == "nt" else "clear"
 
 del requests.cookies.RequestsCookieJar.set_cookie # Necessario perché altrimenti set cookie mi avrebbe formattato il cookie e non avrebbe funzionato
 
-config = dotenv.dotenv_values(".env")
+config = {}
+
+def save_credentials():
+    mail = input("Mail studenti unina\n> ").strip()
+    password = getpass.getpass("Password\n> ")
+    with open('.env', 'w') as f:
+        f.write(
+            f"UNINA_MAIL={mail}\n"
+            f"UNINA_PASS={password}"
+        )
+    print("Credenziali salvate nel file `.env`!")
 
 def login() -> tuple | None:
-    credentials = {
-        "username": config["UNINA_MAIL"],
-        "password": config["UNINA_PASS"]
-    }
+    config = dotenv.dotenv_values(".env")
+    try:
+        credentials = {
+            "username": config["UNINA_MAIL"],
+            "password": config["UNINA_PASS"]
+        }
+    except KeyError:
+        print("\n\n\nATTENZIONE:")
+        print("Non sono stati trovati email e password nel file `.env`.")
+        print("Vuoi seguire la procedura guidata per collegare il tuo account?")
+        choice = input("(S/n) > ").strip().lower()
+        if choice == "" or choice[0] in ("y", "s"):
+            save_credentials()
+            return login()
+        else:
+            print("Procedura abortita.")
+            return None
     req = requests.post(LOGIN_URL, json=credentials, verify=False)
     utente = req.json()
     return (utente, req.cookies) if "error" not in utente.keys() else None
@@ -88,13 +112,17 @@ def enter_dir(teacher_url : str, cookies, dir : dict, index : int) -> dict:
         }, verify= False).json()
 
 def main() -> int:
-    name = input("Inserire nome e cognome del docente da ricercare: ").strip()
-    #name = "Annalisa Allocca"
-    #name = "Valerio Persico"
+    if not os.path.exists(".env"):
+        print("\n\n\nATTENZIONE:")
+        print("È la prima volta che usi questo programma.")
+        print("Segui la procedura guidata per collegare il tuo account.")
+    
+        save_credentials()
     access = login()
     if access == None:
         print("Accesso non riuscito :(")
         return 2
+    name = input("Inserire nome e cognome del docente da ricercare: ").strip()
     user, cookies = access
     try:
         professore_json = requests.get(SEARCH_URL, params={ 
