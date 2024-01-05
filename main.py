@@ -1,10 +1,11 @@
-import dotenv
-import os
 import getpass
-import requests
-import requests.cookies
+import os
 import sys
 import urllib3
+
+import dotenv
+import requests
+import requests.cookies
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
