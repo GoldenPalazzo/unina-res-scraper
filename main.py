@@ -51,9 +51,14 @@ def login() -> tuple | None:
         else:
             print("Procedura abortita.")
             return None
-    req = requests.post(LOGIN_URL, json=credentials, verify=False)
-    utente = req.json()
-    return (utente, req.cookies) if "error" not in utente.keys() else None
+    try:
+        req = requests.post(LOGIN_URL, json=credentials, verify=False)
+        utente = req.json()
+        return (utente, req.cookies)
+    except requests.exceptions.JSONDecodeError:
+        print("Credenziali invalide. Controlla il file `.env` per"
+              " eventuali errori")
+        return None
 
 def get_elements(dir: dict, letter: str | None = None) -> list:
     if letter != None:
@@ -84,7 +89,8 @@ def download_file(
 def list_dir(
         dir: dict,
         only_dirs: bool = False,
-        only_files: bool = False
+        only_files: bool = False,
+        numbered_elements: bool = False
         ) -> bool:
     path = dir.get("percorso")
     print(f"Percorso: {path}")
@@ -95,7 +101,8 @@ def list_dir(
     if len(elements) == 0:
         return False
     for index, element in enumerate(elements):
-        print(f"{index}) {element.get('tipo', 'Corso')}"
+        prefix = f"{index}) " if numbered_elements else ""
+        print(f"{prefix}{element.get('tipo', 'Corso')}"
               " - "
               f"{element['nome'].replace('_', ' ')}")
     print()
@@ -131,6 +138,7 @@ class State:
         self.startup_state()
         self.login_state()
         self.state: callable = self.startup_state
+        self.dir_tree = []
     
     def no_state(self):
         pass
@@ -199,41 +207,48 @@ class State:
     
     def course_selection(self):
         print(f"I corsi di {self.professore_json['nome']} {self.professore_json['cognome']}:")
-        list_dir(dict(percorso="/", contenutoCartella=self.teacher_materials))
+        list_dir(dict(percorso="/", contenutoCartella=self.teacher_materials), numbered_elements=True)
         index = int(input("Di quale corso vuoi i materiali?\n> "))
         course_url = self.teacher_url + f"/{self.teacher_materials[index]['id']}"
-        self.directory = requests.get(course_url, cookies=self.cookies, params={
+        self.dir_tree.append(requests.get(course_url, cookies=self.cookies, params={
             "codIns": self.teacher_materials[index].get('codInse')
-        }, verify= False).json()
-        if self.directory.get("code", 200) == 403:
+        }, verify= False).json())
+        if self.dir_tree[-1].get("code", 200) == 403:
             print("Impossibile accedere al corso "
                 f"{self.teacher_materials[index]['nome']}\n"
-                f"Errore: {self.directory.get('error', 'Errore sconosciuto.')}")
+                f"Errore: {self.dir_tree[-1].get('error', 'Errore sconosciuto.')}")
             return 3
         
         self.change_state(self.course_exploration)
     
     def course_exploration(self):
-        if not list_dir(self.directory):
+        if len(self.dir_tree) == 0:
+            self.change_state(self.course_selection)
+            return 0
+
+        if not list_dir(self.dir_tree[-1]):
             print("La cartella è vuota.")
         action = int(input("Cosa vuoi fare?\n"
                         "1) Entra in una cartella\n"
-                        "2) Scarica un file\n"
+                        "2) Torna nella cartella precedente\n"
+                        "3) Scarica un file\n"
                         "0) Esci\n\n"
                         "> "))
         os.system(CLEAR_COMMAND)
         if action == 0:
             return 4
         if action == 1:
-            if not list_dir(self.directory, only_dirs=True):
+            if not list_dir(self.dir_tree[-1], only_dirs=True, numbered_elements=True):
                 return
             dir_index = int(input("In quale cartella vuoi entrare?\n> "))
-            self.directory = enter_dir(
-                self.teacher_url, self.cookies, self.directory, dir_index
-            )
+            self.dir_tree.append(enter_dir(
+                self.teacher_url, self.cookies, self.dir_tree[-1], dir_index
+            ))
             os.system(CLEAR_COMMAND)
         elif action == 2:
-            if not list_dir(self.directory, only_files=True):
+            self.dir_tree.pop()
+        elif action == 3:
+            if not list_dir(self.dir_tree[-1], only_files=True, numbered_elements=True):
                 print("Non ci sono file, tantomeno da scaricare.")
                 return 5
             print("\n-1) Scarica tutti i file nella cartella\n"
@@ -244,7 +259,7 @@ class State:
             download_element(
                 self.teacher_url,
                 self.cookies,
-                self.directory,
+                self.dir_tree[-1],
                 file_index,
                 f"{self.professore_json['nome']} {self.professore_json['cognome']}"
             )
@@ -299,7 +314,7 @@ def main() -> int:
     # -- COURSE SELECTION
     print(f"I corsi di {professore_json['nome']} {professore_json['cognome']}:")
     while True:
-        list_dir(dict(percorso="/", contenutoCartella=teacher_materials))
+        list_dir(dict(percorso="/", contenutoCartella=teacher_materials), numbered_elements=True)
         index = int(input("Di quale corso vuoi i materiali?\n> "))
         course_url = teacher_url + f"/{teacher_materials[index]['id']}"
         directory = requests.get(course_url, cookies=cookies, params={
