@@ -93,7 +93,6 @@ def list_dir(
         letter = "D" if only_dirs else "F"
     elements = get_elements(dir, letter)
     if len(elements) == 0:
-        print(f"La cartella {path} è vuota")
         return False
     for index, element in enumerate(elements):
         print(f"{index}) {element.get('tipo', 'Corso')}"
@@ -215,26 +214,24 @@ class State:
         self.change_state(self.course_exploration)
     
     def course_exploration(self):
+        if not list_dir(self.directory):
+            print("La cartella è vuota.")
         action = int(input("Cosa vuoi fare?\n"
-                        "1) Elenca gli elementi della cartella corrente\n"
-                        "2) Entra in una cartella\n"
-                        "3) Scarica un file\n"
+                        "1) Entra in una cartella\n"
+                        "2) Scarica un file\n"
                         "0) Esci\n\n"
                         "> "))
         os.system(CLEAR_COMMAND)
         if action == 0:
             return 4
         if action == 1:
-            list_dir(self.directory)
-        elif action == 2:
             if not list_dir(self.directory, only_dirs=True):
                 return
             dir_index = int(input("In quale cartella vuoi entrare?\n> "))
             self.directory = enter_dir(
                 self.teacher_url, self.cookies, self.directory, dir_index
             )
-            os.system(CLEAR_COMMAND)
-        elif action == 3:
+        elif action == 2:
             if not list_dir(self.directory, only_files=True):
                 print("Non ci sono file, tantomeno da scaricare.")
                 return 5
