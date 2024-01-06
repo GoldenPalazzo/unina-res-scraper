@@ -177,45 +177,50 @@ def main() -> int:
         directory = requests.get(course_url, cookies=cookies, params={
             "codIns": teacher_materials[index].get('codInse')
         }, verify= False).json()
-        #print(directory)
+        if directory.get("code", 200) == 403:
+            print("Impossibile accedere al corso "
+                  f"{teacher_materials[index]['nome']}\n"
+                  f"Errore: {directory.get("error", "Errore sconosciuto.")}")
+            continue
+        break
         #list_dir(directory)
-        while True:
-            action = int(input("Cosa vuoi fare?\n"
-                           "1) Elenca gli elementi della cartella corrente\n"
-                           "2) Entra in una cartella\n"
-                           "3) Scarica un file\n"
-                           "0) Esci\n\n"
-                           "> "))
+    while True:
+        action = int(input("Cosa vuoi fare?\n"
+                        "1) Elenca gli elementi della cartella corrente\n"
+                        "2) Entra in una cartella\n"
+                        "3) Scarica un file\n"
+                        "0) Esci\n\n"
+                        "> "))
+        os.system(CLEAR_COMMAND)
+        if action == 0:
+            sys.exit(0)
+        if action == 1:
+            list_dir(directory)
+        elif action == 2:
+            if not list_dir(directory, only_dirs=True):
+                continue
+            dir_index = int(input("In quale cartella vuoi entrare?\n> "))
+            directory = enter_dir(
+                teacher_url, cookies, directory, dir_index
+            )
             os.system(CLEAR_COMMAND)
-            if action == 0:
-                sys.exit(0)
-            if action == 1:
-                list_dir(directory)
-            elif action == 2:
-                if not list_dir(directory, only_dirs=True):
-                    continue
-                dir_index = int(input("In quale cartella vuoi entrare?\n> "))
-                directory = enter_dir(
-                    teacher_url, cookies, directory, dir_index
-                )
-                os.system(CLEAR_COMMAND)
-            elif action == 3:
-                if not list_dir(directory, only_files=True):
-                    print("Non ci sono file, ora mostrerò solo le cartelle...")
-                    list_dir(directory) 
-                print("\n-1) Scarica tutti i file nella cartella\n"
-                      "-2) Scarica tutti i file nella cartella"
-                      " e nelle sottocartelle\n")
-                file_index = int(input("Quale file vuoi scaricare?\n> "))
-                os.system(CLEAR_COMMAND)
-                download_element(
-                    teacher_url,
-                    cookies,
-                    directory,
-                    file_index,
-                    f"{professore_json['nome']} {professore_json['cognome']}"
-                )
-            
+        elif action == 3:
+            if not list_dir(directory, only_files=True):
+                print("Non ci sono file, ora mostrerò solo le cartelle...")
+                list_dir(directory) 
+            print("\n-1) Scarica tutti i file nella cartella\n"
+                    "-2) Scarica tutti i file nella cartella"
+                    " e nelle sottocartelle\n")
+            file_index = int(input("Quale file vuoi scaricare?\n> "))
+            os.system(CLEAR_COMMAND)
+            download_element(
+                teacher_url,
+                cookies,
+                directory,
+                file_index,
+                f"{professore_json['nome']} {professore_json['cognome']}"
+            )
+        
     return 0
 
 if __name__ == '__main__':
