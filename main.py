@@ -166,10 +166,7 @@ def main() -> int:
     teacher_materials = requests.get(
             teacher_url, verify=False
             ).json()
-    #print(teacher_materials)
     print(f"I corsi di {professore_json['nome']} {professore_json['cognome']}:")
-    #for index, course in enumerate(teacher_materials):
-    #    print(f"{index}) {course['nome'].replace('_', ' ')}")
     while True:
         list_dir(dict(percorso="/", contenutoCartella=teacher_materials))
         index = int(input("Di quale corso vuoi i materiali?\n> "))
@@ -183,7 +180,7 @@ def main() -> int:
                   f"Errore: {directory.get("error", "Errore sconosciuto.")}")
             continue
         break
-        #list_dir(directory)
+
     while True:
         action = int(input("Cosa vuoi fare?\n"
                         "1) Elenca gli elementi della cartella corrente\n"
