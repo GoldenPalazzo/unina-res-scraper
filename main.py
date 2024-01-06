@@ -177,7 +177,7 @@ class State:
         if len(self.professori_json) > 1:
             print("Ho trovato questi professori:")
             for index, professore in enumerate(self.professori_json):
-                print(f"{index}) {professore["nome"]} {professore["cognome"]}")
+                print(f"{index}) {professore['nome']} {professore['cognome']}")
             while True:
                 try:
                     choice = int(input("Quale scegli?\n> ").strip())
@@ -208,7 +208,7 @@ class State:
         if self.directory.get("code", 200) == 403:
             print("Impossibile accedere al corso "
                 f"{self.teacher_materials[index]['nome']}\n"
-                f"Errore: {self.directory.get("error", "Errore sconosciuto.")}")
+                f"Errore: {self.directory.get('error', 'Errore sconosciuto.')}")
             return 3
         
         self.change_state(self.course_exploration)
