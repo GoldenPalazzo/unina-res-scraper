@@ -231,6 +231,7 @@ class State:
             self.directory = enter_dir(
                 self.teacher_url, self.cookies, self.directory, dir_index
             )
+            os.system(CLEAR_COMMAND)
         elif action == 2:
             if not list_dir(self.directory, only_files=True):
                 print("Non ci sono file, tantomeno da scaricare.")
