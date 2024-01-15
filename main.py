@@ -206,7 +206,7 @@ class State:
         self.change_state(self.course_selection)
     
     def course_selection(self):
-        print(f"I corsi di {self.professore_json['nome']} {self.professore_json['cognome']}:")
+        print(f"I corsi di {self.professore_json.get('nome')} {self.professore_json.get('cognome')}:")
         list_dir(dict(percorso="/", contenutoCartella=self.teacher_materials), numbered_elements=True)
         index = int(input("Di quale corso vuoi i materiali?\n> "))
         course_url = self.teacher_url + f"/{self.teacher_materials[index]['id']}"
@@ -261,111 +261,8 @@ class State:
                 self.cookies,
                 self.dir_tree[-1],
                 file_index,
-                f"{self.professore_json['nome']} {self.professore_json['cognome']}"
+                f"{self.professore_json.get('nome')} {self.professore_json.get('cognome')}"
             )
-
-def main() -> int:
-    # -- STARTUP
-    if not os.path.exists(".env"):
-        print("\n\n\nATTENZIONE:")
-        print("È la prima volta che usi questo programma.")
-        print("Segui la procedura guidata per collegare il tuo account.")
-    
-        save_credentials()
-    
-    # -- LOGIN
-    access = login()
-    if access == None:
-        print("Accesso non riuscito :(")
-        return 2
-    
-    # -- TEACHER SELECTION
-    name = input("Inserire nome e cognome del docente da ricercare: ").strip()
-    user, cookies = access
-    professore_json = None
-    professori_json = requests.get(SEARCH_URL, params={ 
-        "nome": f"{name.lower()}",
-        "p": 0, 
-        "s": 10
-    }, verify=False).json()["content"]
-    if len(professori_json) == 0:
-        print("Errore: il nome inserito non è valido!")
-        return 1
-    elif len(professori_json) > 1:
-        print("Ho trovato questi professori:")
-        for index, professore in enumerate(professori_json):
-            print(f"{index}) {professore["nome"]} {professore["cognome"]}")
-        while True:
-            try:
-                choice = int(input("Quale scegli?\n> ").strip())
-                professore_json = professori_json[choice]
-                break
-            except IndexError:
-                print("Non è una scelta valida.")
-            except ValueError:
-                print("Non hai inserito un numero!")
-    else:
-        professore_json = professori_json[0]
-    teacher_url = TEACHER_URL.replace("INSERT_ID", professore_json["id"])
-    teacher_materials = requests.get(
-            teacher_url, verify=False
-            ).json()
-    
-    # -- COURSE SELECTION
-    print(f"I corsi di {professore_json['nome']} {professore_json['cognome']}:")
-    while True:
-        list_dir(dict(percorso="/", contenutoCartella=teacher_materials), numbered_elements=True)
-        index = int(input("Di quale corso vuoi i materiali?\n> "))
-        course_url = teacher_url + f"/{teacher_materials[index]['id']}"
-        directory = requests.get(course_url, cookies=cookies, params={
-            "codIns": teacher_materials[index].get('codInse')
-        }, verify= False).json()
-        if directory.get("code", 200) == 403:
-            print("Impossibile accedere al corso "
-                  f"{teacher_materials[index]['nome']}\n"
-                  f"Errore: {directory.get("error", "Errore sconosciuto.")}")
-            continue
-        break
-
-    # -- COURSE EXPLORATION
-    while True:
-        action = int(input("Cosa vuoi fare?\n"
-                        "1) Elenca gli elementi della cartella corrente\n"
-                        "2) Entra in una cartella\n"
-                        "3) Scarica un file\n"
-                        "0) Esci\n\n"
-                        "> "))
-        os.system(CLEAR_COMMAND)
-        if action == 0:
-            sys.exit(0)
-        if action == 1:
-            list_dir(directory)
-        elif action == 2:
-            if not list_dir(directory, only_dirs=True):
-                continue
-            dir_index = int(input("In quale cartella vuoi entrare?\n> "))
-            directory = enter_dir(
-                teacher_url, cookies, directory, dir_index
-            )
-            os.system(CLEAR_COMMAND)
-        elif action == 3:
-            if not list_dir(directory, only_files=True):
-                print("Non ci sono file, ora mostrerò solo le cartelle...")
-                list_dir(directory) 
-            print("\n-1) Scarica tutti i file nella cartella\n"
-                    "-2) Scarica tutti i file nella cartella"
-                    " e nelle sottocartelle\n")
-            file_index = int(input("Quale file vuoi scaricare?\n> "))
-            os.system(CLEAR_COMMAND)
-            download_element(
-                teacher_url,
-                cookies,
-                directory,
-                file_index,
-                f"{professore_json['nome']} {professore_json['cognome']}"
-            )
-        
-    return 0
 
 def main():
     a = State()
