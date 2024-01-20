@@ -208,7 +208,12 @@ class State:
     def course_selection(self):
         print(f"I corsi di {self.professore_json.get('nome')} {self.professore_json.get('cognome')}:")
         list_dir(dict(percorso="/", contenutoCartella=self.teacher_materials), numbered_elements=True)
-        index = int(input("Di quale corso vuoi i materiali?\n> "))
+        while True:
+            try:
+                index = int(input("Di quale corso vuoi i materiali?\n> "))
+                break
+            except ValueError:
+                print("Non hai inserito un numero!")
         course_url = self.teacher_url + f"/{self.teacher_materials[index]['id']}"
         self.dir_tree.append(requests.get(course_url, cookies=self.cookies, params={
             "codIns": self.teacher_materials[index].get('codInse')
@@ -228,19 +233,29 @@ class State:
 
         if not list_dir(self.dir_tree[-1]):
             print("La cartella è vuota.")
-        action = int(input("Cosa vuoi fare?\n"
-                        "1) Entra in una cartella\n"
-                        "2) Torna nella cartella precedente\n"
-                        "3) Scarica un file\n"
-                        "0) Esci\n\n"
-                        "> "))
+        while True:
+            try:
+                action = int(input("Cosa vuoi fare?\n"
+                                "1) Entra in una cartella\n"
+                                "2) Torna nella cartella precedente\n"
+                                "3) Scarica un file\n"
+                                "0) Esci\n\n"
+                                "> "))
+                break
+            except ValueError:
+                print("Non hai inserito un numero!")
         os.system(CLEAR_COMMAND)
         if action == 0:
             return 4
         if action == 1:
             if not list_dir(self.dir_tree[-1], only_dirs=True, numbered_elements=True):
                 return
-            dir_index = int(input("In quale cartella vuoi entrare?\n> "))
+            while True:
+                try:
+                    dir_index = int(input("In quale cartella vuoi entrare?\n> "))
+                    break
+                except ValueError:
+                    print("Non hai inserito un numero!")
             self.dir_tree.append(enter_dir(
                 self.teacher_url, self.cookies, self.dir_tree[-1], dir_index
             ))
@@ -254,7 +269,12 @@ class State:
             print("\n-1) Scarica tutti i file nella cartella\n"
                     "-2) Scarica tutti i file nella cartella"
                     " e nelle sottocartelle\n")
-            file_index = int(input("Quale file vuoi scaricare?\n> "))
+            while True:
+                try:
+                    file_index = int(input("Quale file vuoi scaricare?\n> "))
+                    break
+                except ValueError:
+                    print("Non hai inserito un numero!")
             os.system(CLEAR_COMMAND)
             download_element(
                 self.teacher_url,
