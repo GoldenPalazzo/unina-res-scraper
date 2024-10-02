@@ -216,16 +216,18 @@ class State:
                     print("Non hai inserito un numero!")
         else:
             self.professore_json = self.professori_json[0]
-        
+
+        #print(self.professore_json)
         self.teacher_url = TEACHER_URL.replace("INSERT_ID", self.professore_json["id"])
         self.teacher_materials = requests.get(
                 self.teacher_url, verify=False
                 ).json()
-        
+
         self.change_state(self.course_selection)
-    
+
     def course_selection(self):
-        print(f"I corsi di {self.professore_json.get('nome')} {self.professore_json.get('cognome')}:")
+        print(f"I corsi di {self.professore_json.get('nome')} "
+              f"{self.professore_json.get('cognome')}:")
         list_dir(dict(percorso="/", contenutoCartella=self.teacher_materials), numbered_elements=True)
         while True:
             try:
