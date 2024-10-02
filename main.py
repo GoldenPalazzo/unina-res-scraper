@@ -284,9 +284,14 @@ class State:
         elif action == 2:
             self.dir_tree.pop()
         elif action == 3:
+            nothing = False
             if not list_dir(self.dir_tree[-1], only_files=True, numbered_elements=True):
-                print("Non ci sono file, tantomeno da scaricare.")
-                return 5
+                print("Non ci sono file.")
+                nothing = True
+            if not list_dir(self.dir_tree[-1], only_dirs=True, numbered_elements=False):
+                print("Non ci sono cartelle.")
+                if nothing:
+                    return 5
             print("\n-1) Scarica tutti i file nella cartella\n"
                     "-2) Scarica tutti i file nella cartella"
                     " e nelle sottocartelle\n")
@@ -318,3 +323,4 @@ if __name__ == '__main__':
         sys.exit(main())
     except KeyboardInterrupt:
         print("\nProgramma chiuso.")
+
