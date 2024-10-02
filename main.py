@@ -4,6 +4,7 @@ import sys
 import urllib3
 
 import dotenv
+import platformdirs
 import requests
 import requests.cookies
 
@@ -21,20 +22,27 @@ CLEAR_COMMAND = "cls" if os.name == "nt" else "clear"
 
 del requests.cookies.RequestsCookieJar.set_cookie # Necessario perché altrimenti set cookie mi avrebbe formattato il cookie e non avrebbe funzionato
 
+dirs = platformdirs.PlatformDirs("unina-res-scraper")
+config_file_name = dirs.user_config_dir + os.sep + ".env"
+download_dir = dirs.user_downloads_dir
+
 config = {}
 
 def save_credentials() -> None:
-    mail = input("Mail studenti unina\n> ").strip()
+    mail = input("Mail studente (puoi anche omettere @studenti.unina.it)\n> ").strip()
     password = getpass.getpass("Password\n> ")
-    with open('.env', 'w') as f:
+    if not mail.endswith("@studenti.unina.it"):
+        mail += "@studenti.unina.it"
+    with open(config_file_name, 'w') as f:
+        print("Salvando")
         f.write(
             f"UNINA_MAIL={mail}\n"
             f"UNINA_PASS={password}"
         )
-    print("Credenziali salvate nel file `.env`!")
+    print(f"Credenziali salvate nel file `{config_file_name}`!")
 
 def login() -> tuple | None:
-    config = dotenv.dotenv_values(".env")
+    config = dotenv.dotenv_values(config_file_name)
     try:
         credentials = {
             "username": config["UNINA_MAIL"],
@@ -42,7 +50,7 @@ def login() -> tuple | None:
         }
     except KeyError:
         print("\n\n\nATTENZIONE:")
-        print("Non sono stati trovati email e password nel file `.env`.")
+        print("Sembra essere la prima volta che usi questo programma.")
         print("Vuoi seguire la procedura guidata per collegare il tuo account?")
         choice = input("(S/n) > ").strip().lower()
         if choice == "" or choice[0] in ("y", "s"):
