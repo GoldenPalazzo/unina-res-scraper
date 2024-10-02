@@ -136,7 +136,7 @@ def download_element(teacher_url: str,
             download_element(teacher_url, cookies, subdir, -2, name)
     else:
         download_file(cookies, files[index], name)
-    
+
 def enter_dir(teacher_url : str, cookies, dir : dict, index : int) -> dict:
     dirs = get_elements(dir, "D")
     new_url = teacher_url + f"/{dirs[index].get('id')}"
@@ -166,30 +166,37 @@ class State:
             os.makedirs(dirs.user_config_dir, exist_ok=True)
             save_credentials()
         self.change_state(self.login_state)
-    
+
     def login_state(self):
         self.access: tuple|None = login()
-        
+
         if self.access == None:
             print("Accesso non riuscito :(")
             return 1
-        
+
         self.change_state(self.teacher_search_state)
 
     def teacher_search_state(self):
         name = input("Inserire nome e cognome del docente da ricercare: ").strip()
         self.user, self.cookies = self.access
         self.professore_json = None
-        self.professori_json = requests.get(SEARCH_URL, params={ 
+        self.professori_json = requests.get(SEARCH_URL, params={
             "nome": f"{name.lower()}",
-            "p": 0, 
+            "p": 0,
             "s": 10
-        }, verify=False).json()["content"]
-        
+        }, verify=False).json()
+
+        if "error" in self.professori_json:
+            print(f"Errore: {self.professori_json['error']}")
+            print("Docenti UniNA sta avendo problemi.")
+            return
+
+        self.professore_json = self.professori_json.get("content", [])
+
         if len(self.professori_json) == 0:
             print("Errore: il nome inserito non è valido!")
             return 2
-        
+
         elif len(self.professori_json) >= 1:
             self.change_state(self.teacher_selection_state)
 
