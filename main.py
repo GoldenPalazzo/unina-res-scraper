@@ -89,7 +89,7 @@ def download_file(
     file = requests.get(
         new_url, cookies=cookies, verify=False, allow_redirects=True
     )
-    path = f"{os.getcwd()}{os.sep}{name.replace(' ', '_')}" \
+    path = f"{download_dir}{os.sep}{name.replace(' ', '_')}" \
         f"{file_obj.get('percorso', '').replace('/', os.sep)}{os.sep}"
     os.makedirs(path, exist_ok=True)
     filename = file_obj.get('nome')
@@ -148,23 +148,22 @@ def enter_dir(teacher_url : str, cookies, dir : dict, index : int) -> dict:
 
 class State:
     def __init__(self):
-        self.startup_state()
-        self.login_state()
         self.state: callable = self.startup_state
         self.dir_tree = []
-    
+
     def no_state(self):
         pass
 
     def change_state(self, new_state: callable):
         self.state = new_state
-        os.system(CLEAR_COMMAND)
+        #os.system(CLEAR_COMMAND)
 
     def startup_state(self):
-        if not os.path.exists(".env"):
+        if not os.path.exists(config_file_name):
             print("\n\n\nATTENZIONE:")
             print("È la prima volta che usi questo programma.")
             print("Segui la procedura guidata per collegare il tuo account.")
+            os.makedirs(dirs.user_config_dir, exist_ok=True)
             save_credentials()
         self.change_state(self.login_state)
     
