@@ -60,12 +60,17 @@ def login() -> tuple | None:
             print("Procedura abortita.")
             return None
     try:
-        req = requests.post(LOGIN_URL, json=credentials, verify=False)
+        print(f"Tentando il login (max 10s)")
+        req = requests.post(LOGIN_URL, json=credentials, verify=False, timeout=10)
         utente = req.json()
         return (utente, req.cookies)
     except requests.exceptions.JSONDecodeError:
         print("Credenziali invalide. Controlla il file `.env` per"
               " eventuali errori")
+        return None
+    except requests.exceptions.ConnectTimeout:
+        print("Docenti UniNA non è raggiungibile: il servizio è offline oppure"
+              " non sei collegato alla rete.")
         return None
 
 def get_elements(dir: dict, letter: str | None = None) -> list:
