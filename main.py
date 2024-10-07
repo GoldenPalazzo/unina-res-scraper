@@ -1,3 +1,15 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "certifi==2024.8.30",
+#     "charset-normalizer==3.3.2",
+#     "idna==3.10",
+#     "platformdirs==4.3.6",
+#     "python-dotenv==1.0.1",
+#     "requests==2.32.3",
+#     "urllib3==2.2.3",
+# ]
+# ///
 import getpass
 import os
 import sys
