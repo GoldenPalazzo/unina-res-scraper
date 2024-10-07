@@ -191,7 +191,7 @@ class State:
             print("Docenti UniNA sta avendo problemi.")
             return
 
-        self.professore_json = self.professori_json.get("content", [])
+        self.professori_json = self.professori_json.get("content", [])
 
         if len(self.professori_json) == 0:
             print("Errore: il nome inserito non è valido!")
@@ -244,9 +244,9 @@ class State:
                 f"{self.teacher_materials[index]['nome']}\n"
                 f"Errore: {self.dir_tree[-1].get('error', 'Errore sconosciuto.')}")
             return 3
-        
+
         self.change_state(self.course_exploration)
-    
+
     def course_exploration(self):
         if len(self.dir_tree) == 0:
             self.change_state(self.course_selection)
